@@ -1,0 +1,55 @@
+<article class="article-detail">
+  <div class="container article-container">
+    <nav class="breadcrumb-row">
+      <a href="$home_url">首页</a>
+      <span>/</span>
+      <a href="$articles_url">使用文章</a>
+    </nav>
+    <header class="article-header">
+      <div class="article-meta">
+        <span class="article-category">$category</span>
+        <span class="article-date">$date</span>
+        <span class="article-author">$author</span>
+      </div>
+      <h1 class="article-title">$article_title</h1>
+      <p class="article-description">$article_description</p>
+    </header>
+    <figure class="article-banner">
+      <img src="$article_image" alt="$article_image_alt" class="article-image">
+      <figcaption class="article-image-caption">$article_image_caption</figcaption>
+    </figure>
+    <div class="article-body">
+      $article_body
+    </div>
+    <footer class="article-footer">
+      <div class="tag-list">$tag_html</div>
+      <p class="verification-note">$notice</p>
+      <div class="verification-stamp">信息更新于 $date</div>
+    </footer>
+  </div>
+</article>
+
+<aside class="related-links section">
+  <div class="container">
+    <h2 class="section-title">相关阅读</h2>
+    <div class="side-links">
+      $related_links
+    </div>
+  </div>
+</aside>
+
+<section class="article-faq section">
+  <div class="container">
+    <h2 class="section-title">常见问题</h2>
+    <div class="faq-list">
+      $faq_html
+    </div>
+  </div>
+</section>
+
+<nav class="article-nav">
+  <div class="container">
+    <a href="$home_url" class="btn btn-secondary">返回首页</a>
+    <a href="$articles_url" class="btn btn-secondary">所有文章</a>
+  </div>
+</nav>
