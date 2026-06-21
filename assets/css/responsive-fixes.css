@@ -1,0 +1,121 @@
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.hero-layout > *,
+.hero-visual,
+.hero-content {
+  min-width: 0;
+}
+
+.hero-visual,
+.hero-illustration {
+  width: 100%;
+}
+
+.hero-illustration {
+  max-width: 500px;
+  margin-inline: auto;
+}
+
+.hero-actions {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.trust-badge {
+  flex: 1 1 320px;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trust-badge li {
+  display: inline-flex;
+  flex: 1 1 180px;
+  align-items: flex-start;
+  min-width: 0;
+  line-height: 1.55;
+}
+
+.trust-badge li::before {
+  content: "\2713";
+  flex: 0 0 auto;
+  margin-right: 8px;
+  font-weight: 700;
+}
+
+.offer-carousel {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow: visible;
+  gap: 16px;
+}
+
+.offer-carousel .post-card {
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.post-card h2,
+.post-card p,
+.article-body,
+.article-body table {
+  overflow-wrap: anywhere;
+}
+
+.article-body {
+  min-width: 0;
+}
+
+.article-body table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+@media (max-width: 1000px) {
+  .offer-carousel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .container {
+    width: 100%;
+    padding-inline: 18px;
+  }
+
+  .hero-section {
+    padding: 48px 0;
+  }
+
+  .hero-layout {
+    width: 100%;
+    gap: 32px;
+  }
+
+  .hero-illustration {
+    padding: 10px;
+  }
+
+  .hero-actions,
+  .trust-badge {
+    width: 100%;
+  }
+
+  .trust-badge li {
+    flex-basis: 100%;
+  }
+
+  .offer-carousel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .offer-carousel .post-card {
+    width: 100%;
+  }
+}
