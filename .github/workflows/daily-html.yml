@@ -13,16 +13,6 @@ on:
     - cron: "15 10 * * *"
     - cron: "31 11 * * *"
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - "content/site.yml"
-      - "scripts/site.py"
-      - "templates/**"
-      - "assets/css/style.css"
-      - "assets/css/responsive-fixes.css"
-      - "assets/js/main.js"
 
 permissions:
   contents: write
