@@ -1,0 +1,50 @@
+name: Initialize DeepSeek Template
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: template-initialization
+  cancel-in-progress: false
+
+jobs:
+  initialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Resolve site URL
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          if [ -z "$SITE_URL" ]; then
+            SITE_URL="https://${GITHUB_REPOSITORY_OWNER}.github.io"
+          fi
+          echo "RESOLVED_SITE_URL=$(printf '%s' "$SITE_URL" | xargs)" >> "$GITHUB_ENV"
+
+      - name: Generate template once
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_MODEL: ${{ vars.DEEPSEEK_MODEL }}
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
+        run: |
+          python scripts/init_template.py
+          python scripts/site.py build --site-url "$RESOLVED_SITE_URL"
+
+      - name: Commit generated template
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add templates assets/css/style.css index.html articles feed.xml sitemap.xml robots.txt content/site.yml
+          git commit -m "initialize one-time DeepSeek template"
+          git push
