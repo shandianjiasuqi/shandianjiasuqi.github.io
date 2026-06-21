@@ -50,10 +50,10 @@ jobs:
                   "Run the Initialize DeepSeek Template workflow once."
               )
           version = int(json.loads(lock_path.read_text(encoding="utf-8")).get("prompt_version", 0))
-          if version < 3:
+          if version < 1:
               raise SystemExit(
                   "::error title=Template upgrade required::"
-                  "Run Initialize DeepSeek Template once to create the reviewed v3 design."
+                  "Run Initialize DeepSeek Template once to create the reviewed design."
               )
           PY
 
