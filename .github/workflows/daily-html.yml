@@ -1,125 +1,35 @@
-name: Daily SEO Publishing
+﻿name: Daily SEO Publishing
 
 on:
   schedule:
     - cron: "7 0 * * *"
-    - cron: "23 1 * * *"
-    - cron: "39 2 * * *"
-    - cron: "55 3 * * *"
-    - cron: "11 5 * * *"
-    - cron: "27 6 * * *"
-    - cron: "43 7 * * *"
-    - cron: "59 8 * * *"
-    - cron: "15 10 * * *"
-    - cron: "31 11 * * *"
-  workflow_dispatch:
+    - cron: "55 0 * * *"
+    - cron: "43 1 * * *"
+    - cron: "31 2 * * *"
+    - cron: "19 3 * * *"
+    - cron: "7 4 * * *"
+    - cron: "55 4 * * *"
+    - cron: "43 5 * * *"
+    - cron: "31 6 * * *"
+    - cron: "19 7 * * *"
+    - cron: "7 8 * * *"
+    - cron: "55 8 * * *"
+    - cron: "43 9 * * *"
+    - cron: "31 10 * * *"
+    - cron: "19 11 * * *"
+    - cron: "7 12 * * *"
+    - cron: "55 12 * * *"
+    - cron: "43 13 * * *"
+    - cron: "31 14 * * *"
+    - cron: "19 15 * * *"
+    - cron: "7 16 * * *"
+    - cron: "55 16 * * *"
+    - cron: "43 17 * * *"
+    - cron: "31 18 * * *"
+    - cron: "19 19 * * *"
+    - cron: "7 20 * * *"
+    - cron: "55 20 * * *"
+    - cron: "43 21 * * *"
+    - cron: "31 22 * * *"
+    - cron: "19 23 * * *"
 
-permissions:
-  contents: write
-
-concurrency:
-  group: private-keyword-publisher
-  cancel-in-progress: false
-
-jobs:
-  update:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Check template initialization
-        run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-
-          lock_path = Path("templates/template.lock.json")
-          if not lock_path.exists():
-              raise SystemExit(
-                  "::error title=Template not initialized::"
-                  "Run the Initialize DeepSeek Template workflow once."
-              )
-          version = int(json.loads(lock_path.read_text(encoding="utf-8")).get("prompt_version", 0))
-          if version < 1:
-              raise SystemExit(
-                  "::error title=Template upgrade required::"
-                  "Run Initialize DeepSeek Template once to create the reviewed design."
-              )
-          PY
-
-      - name: Checkout private keyword data
-        if: github.event_name != 'push'
-        uses: actions/checkout@v6
-        with:
-          repository: ${{ vars.SEO_DATA_REPO }}
-          token: ${{ secrets.SEO_DATA_TOKEN }}
-          path: .private-keywords
-
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Resolve site URL
-        env:
-          SITE_URL: ${{ vars.SITE_URL }}
-        run: |
-          if [ -z "$SITE_URL" ]; then
-            SITE_URL="https://${GITHUB_REPOSITORY_OWNER}.github.io"
-          fi
-          echo "RESOLVED_SITE_URL=$(printf '%s' "$SITE_URL" | xargs)" >> "$GITHUB_ENV"
-
-      - name: Claim private keyword
-        id: private_keyword
-        if: github.event_name != 'push'
-        run: |
-          python scripts/private_keywords.py claim --data-dir .private-keywords
-          cd .private-keywords
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add used_keywords.json
-          git diff --cached --quiet || git commit -m "claim keyword for run ${GITHUB_RUN_ID}"
-          git push
-
-      - name: Generate article and build HTML
-        env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          DEEPSEEK_MODEL: ${{ vars.DEEPSEEK_MODEL }}
-          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
-          SELECTED_KEYWORD: ${{ steps.private_keyword.outputs.keyword }}
-          PRIVATE_KEYWORD_AVAILABLE: ${{ steps.private_keyword.outputs.available }}
-        run: |
-          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
-            python scripts/site.py build --site-url "$RESOLVED_SITE_URL"
-          elif [ "$PRIVATE_KEYWORD_AVAILABLE" = "true" ]; then
-            python scripts/site.py new "$SELECTED_KEYWORD" --site-url "$RESOLVED_SITE_URL"
-          else
-            python scripts/site.py build --site-url "$RESOLVED_SITE_URL"
-          fi
-
-      - name: Commit generated HTML
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .
-          git diff --cached --quiet || git commit -m "publish seo article"
-          git push
-
-      - name: Complete private keyword record
-        if: github.event_name != 'push' && steps.private_keyword.outputs.available == 'true' && success()
-        env:
-          SELECTED_KEYWORD: ${{ steps.private_keyword.outputs.keyword }}
-        run: |
-          python scripts/private_keywords.py complete --data-dir .private-keywords --keyword "$SELECTED_KEYWORD"
-          cd .private-keywords
-          git add used_keywords.json
-          git diff --cached --quiet || git commit -m "complete keyword for run ${GITHUB_RUN_ID}"
-          git push
-
-      - name: Notify Bing via IndexNow
-        env:
-          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
-        run: |
-          python scripts/site.py indexnow --site-url "$RESOLVED_SITE_URL"
