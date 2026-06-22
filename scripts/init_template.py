@@ -150,6 +150,26 @@ def validate_template(name: str, text: str, required: set[str]) -> None:
         )
 
 
+def sanitize_template_fragment(text: str) -> str:
+    text = str(text or "").strip()
+    text = re.sub(r"(?is)<!doctype[^>]*>", "", text)
+    text = re.sub(r"(?is)<script\b[^>]*>.*?</script>", "", text)
+    text = re.sub(r"(?is)<style\b[^>]*>.*?</style>", "", text)
+    text = re.sub(r"(?is)<iframe\b[^>]*>.*?</iframe>", "", text)
+    text = re.sub(r"(?is)<link\b[^>]*>", "", text)
+
+    main_match = re.search(r"(?is)<main\b[^>]*>(.*?)</main>", text)
+    if main_match:
+        text = main_match.group(1).strip()
+    else:
+        body_match = re.search(r"(?is)<body\b[^>]*>(.*?)</body>", text)
+        if body_match:
+            text = body_match.group(1).strip()
+
+    text = re.sub(r"(?is)</?(?:html|head|body|main)\b[^>]*>", "", text)
+    return text.strip()
+
+
 def validate_css(css: str) -> None:
     lowered = css.lower()
     if not css or "{" not in css or "}" not in css:
@@ -261,6 +281,16 @@ def design_brief_prompt(config: dict) -> str:
 
 def implementation_prompt(config: dict, design_brief: dict) -> str:
     return f"""
+You are generating partial HTML templates for a static site builder.
+Hard constraints:
+- Return JSON only.
+- home_template and article_template must be HTML fragments for the inside of <main> only.
+- Do not include <!doctype>, <html>, <head>, <body>, <main>, <script>, <style>, <link>, <iframe>, or <button>.
+- Do not include external CSS, external JavaScript, inline JavaScript, analytics, ads, or tracking code.
+- Use only normal links and details/summary for interaction.
+- Keep all required placeholders exactly as provided.
+- theme_css must contain all CSS.
+
 ?????????????????????????????????
 
 ???{config['title']}
@@ -370,9 +400,10 @@ def generate() -> None:
         attempt_prompt = base_prompt
         if validation_error:
             attempt_prompt += (
-                "\n\n上次实现未通过接口完整性检查："
+                "\n\nThe previous implementation failed validation: "
                 f"{validation_error}\n"
-                "保留官网感、完整板块和设计完成度，只修正缺失接口或未覆盖组件，并重新输出完整 JSON。"
+                "Fix the issue and return complete JSON again. "
+                "Templates are fragments inside <main> only; no html/head/body/main/script/style/link/iframe/button."
             )
         generated = request_design(
             key,
@@ -382,8 +413,8 @@ def generate() -> None:
             temperature=0.8,
             max_tokens=12000,
         )
-        home = str(generated.get("home_template", "")).strip()
-        article = str(generated.get("article_template", "")).strip()
+        home = sanitize_template_fragment(generated.get("home_template", ""))
+        article = sanitize_template_fragment(generated.get("article_template", ""))
         css = str(generated.get("theme_css", "")).strip()
         try:
             validate_template("home_template", home, HOME_REQUIRED_PLACEHOLDERS)
@@ -405,8 +436,8 @@ def generate() -> None:
             temperature=0.65,
             max_tokens=14000,
         )
-        reviewed_home = str(reviewed.get("home_template", "")).strip()
-        reviewed_article = str(reviewed.get("article_template", "")).strip()
+        reviewed_home = sanitize_template_fragment(reviewed.get("home_template", ""))
+        reviewed_article = sanitize_template_fragment(reviewed.get("article_template", ""))
         reviewed_css = str(reviewed.get("theme_css", "")).strip()
         validate_template("home_template", reviewed_home, HOME_REQUIRED_PLACEHOLDERS)
         validate_template("article_template", reviewed_article, ARTICLE_REQUIRED_PLACEHOLDERS)
